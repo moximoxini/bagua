@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>六爻排卦解卦工具</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft Yahei",sans-serif}
+body{max-width:700px;margin:30px auto;padding:0 20px;background:#f7f3eb;color:#222}
+h2{text-align:center;margin-bottom:24px;color:#8b4513}
+.yao-item{display:flex;align-items:center;justify-content:space-between;margin:10px 0;padding:8px 12px;background:#fff;border-radius:6px}
+label{width:80px;font-weight:bold}
+select{padding:6px 10px;width:160px;font-size:16px}
+#calcBtn{width:100%;padding:12px;background:#8b4513;color:#fff;border:none;border-radius:6px;font-size:18px;margin:20px 0;cursor:pointer}
+#result{padding:16px;background:#fff;border-radius:8px;line-height:1.8}
+.gua-title{font-size:20px;font-weight:bold;margin:10px 0;color:#922}
+.desc{margin:8px 0}
+</style>
+</head>
+<body>
+<h2>六爻自动排卦工具（自下而上依次输入初爻~六爻）</h2>
+<div class="yao-item">
+<label>初爻（最下）</label>
+<select id="y1">
+<option value="7">少阳(7)</option>
+<option value="8">少阴(8)</option>
+<option value="9">老阳(9)</option>
+<option value="6">老阴(6)</option>
+</select>
+</div>
+<div class="yao-item">
+<label>二爻</label>
+<select id="y2">
+<option value="7">少阳(7)</option>
+<option value="8">少阴(8)</option>
+<option value="9">老阳(9)</option>
+<option value="6">老阴(6)</option>
+</select>
+</div>
+<div class="yao-item">
+<label>三爻</label>
+<select id="y3">
+<option value="7">少阳(7)</option>
+<option value="8">少阴(8)</option>
+<option value="9">老阳(9)</option>
+<option value="6">老阴(6)</option>
+</select>
+</div>
+<div class="yao-item">
+<label>四爻</label>
+<select id="y4">
+<option value="7">少阳(7)</option>
+<option value="8">少阴(8)</option>
+<option value="9">老阳(9)</option>
+<option value="6">老阴(6)</option>
+</select>
+</div>
+<div class="yao-item">
+<label>五爻</label>
+<select id="y5">
+<option value="7">少阳(7)</option>
+<option value="8">少阴(8)</option>
+<option value="9">老阳(9)</option>
+<option value="6">老阴(6)</option>
+</select>
+</div>
+<div class="yao-item">
+<label>六爻（最上）</label>
+<select id="y6">
+<option value="7">少阳(7)</option>
+<option value="8">少阴(8)</option>
+<option value="9">老阳(9)</option>
+<option value="6">老阴(6)</option>
+</select>
+</div>
+<button id="calcBtn">计算卦象</button>
+<div id="result"></div>
+
+<script>
+// 64卦数据：[上卦二进制,下卦二进制,卦名,卦辞简述]
+const guaList = [
+    [0,0,"乾为天","乾：元亨利贞。天行健，君子以自强不息。"],
+    [0,1,"天泽履","履：履虎尾，不咥人，亨。循礼慎行，稳步前行。"],
+    [0,2,"天火同人","同人：同人于野，亨。利涉大川，利君子贞。"],
+    [0,3,"天雷无妄","无妄：元亨，利贞。其匪正有眚，不利有攸往。"],
+    [0,4,"天风姤","姤：女壮，勿用取女。一阴初生，慎防小人。"],
+    [0,5,"天水讼","讼：有孚窒，惕中吉，终凶。凡事宜退让不争。"],
+    [0,6,"天山遁","遁：亨，小利贞。时局不利，暂避锋芒。"],
+    [0,7,"天地否","否：否之匪人，不利君子贞，大往小来。闭塞不通，诸事阻滞。"],
+    [1,0,"泽天夬","夬：扬于王庭，孚号有厉。决断除恶，不可迟疑。"],
+    [1,1,"兑为泽","兑：亨，利贞。和悦待人，沟通顺畅。"],
+    [1,2,"泽火革","革：己日乃孚，元亨，利贞，悔亡。变革更新，破旧立新。"],
+    [1,3,"泽雷随","随：元亨，利贞，无咎。顺时而动，随从正道。"],
+    [1,4,"泽风大过","大过：栋桡，利有攸往，亨。担当重任，谨防倾覆。"],
+    [1,5,"泽水困","困：亨，贞，大人吉，无咎。困境守正，终得解脱。"],
+    [1,6,"泽山咸","咸：亨，利贞，取女吉。阴阳相感，人际相合。"],
+    [1,7,"泽地萃","萃：亨，王假有庙，利见大人，亨，利贞。聚众成事，同心协力。"],
+    [2,0,"火天大有","大有：元亨。得时得势，收获丰厚。"],
+    [2,1,"火泽睽","睽：小事吉。心意不合，求同存异方可成事。"],
+    [2,2,"离为火","离：利贞，亨。畜牝牛吉。依附正道，光明守柔。"],
+    [2,3,"火雷噬嗑","噬嗑：亨，利用狱。断除阻隔，明辨是非。"],
+    [2,4,"火风鼎","鼎：元吉，亨。立稳根基，承新纳福。"],
+    [2,5,"火水未济","未济：亨，小狐汔济，濡其尾，无攸利。事未成，慎终如始。"],
+    [2,6,"火山旅","旅：小亨，旅贞吉。在外漂泊，守正低调。"],
+    [2,7,"火地晋","晋：康侯用锡马蕃庶，昼日三接。循序渐进，步步高升。"],
+    [3,0,"雷天大壮","大壮：利贞。阳气盛，行事刚健不可鲁莽。"],
+    [3,1,"雷泽归妹","归妹：征凶，无攸利。嫁娶不合，行事失序多损耗。"],
+    [3,2,"雷火丰","丰：亨，王假之，勿忧，宜日中。盛大昌盛，盛极需防衰。"],
+    [3,3,"震为雷","震：亨，震来虩虩，笑言哑哑。戒惧自省，遇危不乱。"],
+    [3,4,"雷风恒","恒：亨，无咎，利贞，利有攸往。持之以恒，坚守本心。"],
+    [3,5,"雷水解","解：利西南，无所往，其来复吉。解脱困厄，舒缓压力。"],
+    [3,6,"雷山小过","小过：亨，利贞，可小事，不可大事。小有偏差，不宜激进。"],
+    [3,7,"雷地豫","豫：利建侯行师。安乐和顺，顺势而为。"],
+    [4,0,"风天小畜","小畜：亨，密云不雨，自我西郊。积蓄力量，时机未到。"],
+    [4,1,"风泽中孚","中孚：豚鱼吉，利涉大川，利贞。心怀诚信，感召他人。"],
+    [4,2,"风火家人","家人：利女贞。治家有道，内外和睦。"],
+    [4,3,"风雷益","益：利有攸往，利涉大川。增益进取，行善积福。"],
+    [4,4,"巽为风","巽：小亨，利有攸往，利见大人。谦逊柔顺，顺势融入。"],
+    [4,5,"风水涣","涣：亨，王假有庙，利涉大川，利贞。涣散心结，化解矛盾。"],
+    [4,6,"风山渐","渐：女归吉，利贞。循序渐进，不可急于求成。"],
+    [4,7,"风地观","观：盥而不荐，有孚颙若。静心观察，审时度势。"],
+    [5,0,"水天需","需：有孚，光亨，贞吉，利涉大川。静待时机，积蓄等待。"],
+    [5,1,"水泽节","节：亨，苦节不可贞。懂得节制，张弛有度。"],
+    [5,2,"水火既济","既济：亨小，利贞，初吉终乱。大功告成，谨防松懈衰败。"],
+    [5,3,"水雷屯","屯：元亨，利贞，勿用有攸往，利建侯。初始艰难，开创立业。"],
+    [5,4,"水风井","井：改邑不改井，无丧无得。守持本心，滋养他人。"],
+    [5,5,"坎为水","坎：习坎，有孚，维心亨，行有尚。身处险难，坚守内心。"],
+    [5,6,"水山蹇","蹇：利西南，不利东北，利见大人，贞吉。前路艰难，寻求贵人相助。"],
+    [5,7,"水地比","比：吉，原筮，元永贞，无咎。亲近贤良，同心依附。"],
+    [6,0,"山天大畜","大畜：利贞，不家食吉，利涉大川。大量积蓄，厚积薄发。"],
+    [6,1,"山泽损","损：有孚，元吉，无咎，可贞，利有攸往。适当取舍，吃亏是福。"],
+    [6,2,"山火贲","贲：亨，小利有攸往。修饰文采，外在得体内在守真。"],
+    [6,3,"山雷颐","颐：贞吉，观颐，自求口实。自食其力，修身养性。"],
+    [6,4,"山风蛊","蛊：元亨，利涉大川，先甲三日，后甲三日。整治积弊，革新旧事。"],
+    [6,5,"山水蒙","蒙：亨，匪我求童蒙，童蒙求我。启蒙解惑，虚心求学。"],
+    [6,6,"艮为山","艮：艮其背，不获其身，行其庭不见其人，无咎。知止有度，克制欲望。"],
+    [6,7,"山地剥","剥：不利有攸往。根基受损，收敛退守，不可进取。"],
+    [7,0,"地天泰","泰：小往大来，吉亨。阴阳相交，万事通达顺遂。"],
+    [7,1,"地泽临","临：元亨，利贞，至于八月有凶。居高临下，体恤下属，盛极转衰。"],
+    [7,2,"地火明夷","明夷：利艰贞。光明受损，隐忍守正等待时机。"],
+    [7,3,"地雷复","复：亨，出入无疾，朋来无咎。阳气回归，改过自新，失而复得。"],
+    [7,4,"地风升","升：元亨，用见大人，勿恤，南征吉。稳步上升，贵人提携。"],
+    [7,5,"地水师","师：贞，丈人吉，无咎。率众行事，持正稳重。"],
+    [7,6,"地山谦","谦：亨，君子有终。谦逊退让，万事吉祥。"],
+    [7,7,"坤为地","坤：元亨，利牝马之贞。地势坤，君子厚德载物。"]
+];
+// 八卦对应二进制：阳1阴0
+const baGuaBin = {
+    qian: [1,1,1], dui:[0,1,1], li:[1,0,1], zhen:[0,0,1],
+    xun:[1,1,0], kan:[0,1,0], gen:[1,0,0], kun:[0,0,0]
+};
+// 转换单爻为阴阳：7/9阳=1，6/8阴=0
+function yao2Bin(n){
+    if(n==7||n==9) return 1;
+    return 0;
+}
+// 获取本卦上下卦二进制 [下三爻,上三爻]
+function getBenGua(yArr){
+    const xia = [yao2Bin(yArr[0]), yao2Bin(yArr[1]), yao2Bin(yArr[2])];
+    const shang = [yao2Bin(yArr[3]), yao2Bin(yArr[4]), yao2Bin(yArr[5])];
+    // 转卦索引数字
+    let xiaCode = xia[0]*4 + xia[1]*2 + xia[2]*1;
+    let shangCode = shang[0]*4 + shang[1]*2 + shang[2]*1;
+    return [shangCode, xiaCode];
+}
+// 变卦：老阳9变阴0，老阴6变阳1，少阳少阴不变
+function getBianYao(y){
+    if(y==9) return 0;
+    if(y==6) return 1;
+    return yao2Bin(y);
+}
+function getBianGua(yArr){
+    const xia = [getBianYao(yArr[0]), getBianYao(yArr[1]), getBianYao(yArr[2])];
+    const shang = [getBianYao(yArr[3]), getBianYao(yArr[4]), getBianYao(yArr[5])];
+    let xiaCode = xia[0]*4 + xia[1]*2 + xia[2]*1;
+    let shangCode = shang[0]*4 + shang[1]*2 + shang[2]*1;
+    return [shangCode, xiaCode];
+}
+// 根据上下码查卦
+function findGua(shang, xia){
+    for(let g of guaList){
+        if(g[0]==shang && g[1]==xia) return g;
+    }
+    return null;
+}
+// 主逻辑
+document.getElementById("calcBtn").onclick = function(){
+    const y1 = Number(document.getElementById("y1").value);
+    const y2 = Number(document.getElementById("y2").value);
+    const y3 = Number(document.getElementById("y3").value);
+    const y4 = Number(document.getElementById("y4").value);
+    const y5 = Number(document.getElementById("y5").value);
+    const y6 = Number(document.getElementById("y6").value);
+    const yArr = [y1,y2,y3,y4,y5,y6];
+    // 动爻统计
+    let dongList = [];
+    yArr.forEach((v,i)=>{
+        if(v===6||v===9) dongList.push(i+1);
+    })
+    // 本卦
+    const benCode = getBenGua(yArr);
+    const benGua = findGua(benCode[0], benCode[1]);
+    // 变卦
+    const bianCode = getBianGua(yArr);
+    const bianGua = findGua(bianCode[0], bianCode[1]);
+
+    let html = "";
+    html += `<div class="gua-title">本卦：${benGua[2]}</div>`;
+    html += `<div class="desc">卦义：${benGua[3]}</div>`;
+    if(dongList.length>0){
+        html += `<div class="desc">动爻：${dongList.join("、")}爻</div>`;
+        html += `<div class="gua-title">变卦：${bianGua[2]}</div>`;
+        html += `<div class="desc">变卦义：${bianGua[3]}</div>`;
+    }else{
+        html += `<div class="desc">无动爻，为本卦静卦</div>`;
+    }
+    document.getElementById("result").innerHTML = html;
+}
+</script>
+</body>
+</html>
